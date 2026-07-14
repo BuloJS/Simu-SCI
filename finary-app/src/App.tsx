@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { AllocationDonut } from './components/AllocationDonut';
+import { AuthBar } from './components/AuthBar';
 import { CryptoTab } from './components/CryptoTab';
 import { CtoTab } from './components/CtoTab';
 import { LivretTab } from './components/LivretTab';
 import { SummaryCards } from './components/SummaryCards';
 import { useApiKey } from './hooks/useApiKey';
+import { useAuth } from './hooks/useAuth';
 import { useDarkMode } from './hooks/useDarkMode';
 import { usePortfolio } from './hooks/usePortfolio';
 import { computeTotals } from './lib/compute';
@@ -18,7 +20,8 @@ const TABS: { key: Category; label: string; emoji: string }[] = [
 ];
 
 export default function App() {
-  const { portfolio, setPortfolio, update } = usePortfolio();
+  const { user, userId, signIn, signOut } = useAuth();
+  const { portfolio, setPortfolio, update, syncing } = usePortfolio(userId);
   const { dark, toggle } = useDarkMode();
   const { apiKey, setApiKey } = useApiKey();
   const [tab, setTab] = useState<Category>('livret');
@@ -63,7 +66,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-surface-dark/70">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight">
               <span className="text-brand">◆</span> Patrimoine
@@ -72,7 +75,13 @@ export default function App() {
               Total : {formatEur(totals.total)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <AuthBar
+              email={user?.email ?? null}
+              syncing={syncing}
+              onSignIn={signIn}
+              onSignOut={signOut}
+            />
             <button onClick={exportJson} className="btn-ghost" title="Sauvegarder">
               ⬇ Export
             </button>
