@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { AllocationDonut } from './components/AllocationDonut';
 import { CryptoTab } from './components/CryptoTab';
 import { CtoTab } from './components/CtoTab';
 import { LivretTab } from './components/LivretTab';
 import { SummaryCards } from './components/SummaryCards';
+import { useApiKey } from './hooks/useApiKey';
 import { useDarkMode } from './hooks/useDarkMode';
 import { usePortfolio } from './hooks/usePortfolio';
 import { computeTotals } from './lib/compute';
 import { formatEur } from './lib/format';
-import type { Category } from './types';
+import { emptyPortfolio, type Category, type Portfolio } from './types';
 
 const TABS: { key: Category; label: string; emoji: string }[] = [
   { key: 'livret', label: 'Livrets', emoji: '🏦' },
@@ -17,9 +18,11 @@ const TABS: { key: Category; label: string; emoji: string }[] = [
 ];
 
 export default function App() {
-  const { portfolio, update } = usePortfolio();
+  const { portfolio, setPortfolio, update } = usePortfolio();
   const { dark, toggle } = useDarkMode();
+  const { apiKey, setApiKey } = useApiKey();
   const [tab, setTab] = useState<Category>('livret');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => computeTotals(portfolio), [portfolio]);
 
@@ -29,10 +32,38 @@ export default function App() {
     crypto: portfolio.crypto.length,
   };
 
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(portfolio, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `patrimoine-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result)) as Partial<Portfolio>;
+        setPortfolio({ ...emptyPortfolio, ...data });
+      } catch {
+        alert('Fichier JSON invalide.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-surface-dark/70">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight">
               <span className="text-brand">◆</span> Patrimoine
@@ -41,9 +72,28 @@ export default function App() {
               Total : {formatEur(totals.total)}
             </p>
           </div>
-          <button onClick={toggle} className="btn-ghost" aria-label="Thème">
-            {dark ? '☀️ Clair' : '🌙 Sombre'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={exportJson} className="btn-ghost" title="Sauvegarder">
+              ⬇ Export
+            </button>
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="btn-ghost"
+              title="Importer une sauvegarde"
+            >
+              ⬆ Import
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={importJson}
+            />
+            <button onClick={toggle} className="btn-ghost" aria-label="Thème">
+              {dark ? '☀️' : '🌙'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -80,7 +130,12 @@ export default function App() {
               />
             )}
             {tab === 'cto' && (
-              <CtoTab items={portfolio.cto} onChange={(v) => update('cto', v)} />
+              <CtoTab
+                items={portfolio.cto}
+                onChange={(v) => update('cto', v)}
+                apiKey={apiKey}
+                setApiKey={setApiKey}
+              />
             )}
             {tab === 'crypto' && (
               <CryptoTab
@@ -92,8 +147,9 @@ export default function App() {
         </div>
 
         <footer className="pt-4 text-center text-xs text-slate-400">
-          Données enregistrées localement dans votre navigateur · Cours crypto :
-          CoinGecko · Taux réglementés au 1er février 2026
+          Données enregistrées localement (export/import JSON) · Cours crypto :
+          CoinGecko · Cours actions/ETF : Twelve Data · Taux réglementés au 1er
+          février 2026
         </footer>
       </main>
     </div>

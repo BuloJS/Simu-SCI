@@ -21,7 +21,11 @@ Techno standard pour ce type de dashboard (celle utilisée par Finary) :
 - **Onglet Livrets** : taux réglementés français pré-remplis et modifiables
   (Livret A 1,5 %, LDDS 1,5 %, LEP 2,5 %, CEL 1 %, PEL 2 %…), en vigueur au
   1er février 2026 — source [economie.gouv.fr](https://www.economie.gouv.fr/actualites/epargne-reglementee-de-nouveaux-taux-pour-le-livret-et-le-lep-au-1er-fevrier-2026)
-- **Onglet CTO** : actions/ETF avec quantité, PRU, cours, valeur et +/- value
+- **Onglet CTO** : recherche/autocomplétion des vrais tickers boursiers et **cours
+  actions/ETF en direct** (via Twelve Data, convertis en € ), quantité, PRU,
+  valeur et +/- value. La clé API Twelve Data se saisit dans l'app (stockée dans
+  le navigateur, jamais committée)
+- **Sauvegarde** : boutons Export / Import du patrimoine en JSON
 - **Onglet Crypto** : quantité + PRU, cours récupérés en direct (bouton « Cours live »)
 - Ajout manuel sur chaque onglet, suppression de lignes
 - Thème clair / sombre

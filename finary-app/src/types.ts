@@ -14,9 +14,11 @@ export interface CtoLine {
   id: string;
   nom: string; // ex: "MSCI World ETF"
   ticker: string; // ex: "CW8"
+  devise: string; // devise de cotation, ex: "USD", "EUR"
+  bourse: string; // place de cotation, ex: "NASDAQ", "XPAR"
   quantite: number;
   pru: number; // prix de revient unitaire en €
-  cours: number; // cours actuel en € (saisi à la main)
+  cours: number; // cours actuel en € (auto via API ou manuel)
 }
 
 /** Ligne crypto */
