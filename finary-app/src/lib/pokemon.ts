@@ -1,8 +1,10 @@
 /**
- * Recherche de cartes Pokémon via l'API publique pokemontcg.io (gratuite, CORS ok).
- * Fournit l'image et les prix Cardmarket (moyennes 30/7/1 j + tendance, en €).
+ * Recherche de cartes Pokémon via l'API TCGdex (https://tcgdex.dev) — gratuite,
+ * multilingue (français inclus), CORS ok. Fournit image + prix Cardmarket.
  */
-const BASE = 'https://api.pokemontcg.io/v2';
+const BASE = 'https://api.tcgdex.net/v2';
+
+export type Lang = 'fr' | 'en';
 
 export interface PokemonPrices {
   avg30?: number;
@@ -27,39 +29,65 @@ export function parseNumber(input: string): string {
   return input.split(/[/\s]+/)[0]?.trim() ?? '';
 }
 
+function pick(o: any, keys: string[]): number | undefined {
+  if (!o) return undefined;
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+  }
+  return undefined;
+}
+
+async function getJson(url: string): Promise<any> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`TCGdex a répondu ${res.status}`);
+  return res.json();
+}
+
 export async function searchPokemonCard(
   name: string,
   number: string,
-  set?: string,
+  set: string | undefined,
+  lang: Lang = 'fr',
 ): Promise<PokemonMatch | null> {
-  const parts: string[] = [];
-  if (name.trim()) parts.push(`name:"${name.replace(/"/g, '')}"`);
+  const params = new URLSearchParams();
+  if (name.trim()) params.set('name', name.trim());
   const num = parseNumber(number);
-  if (num) parts.push(`number:${num}`);
-  if (set?.trim()) parts.push(`set.name:"${set.replace(/"/g, '')}"`);
-  if (parts.length === 0) return null;
+  if (num) params.set('localId', num);
 
-  const url = `${BASE}/cards?q=${encodeURIComponent(parts.join(' '))}&pageSize=5&orderBy=-set.releaseDate`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Pokémon TCG API a répondu ${res.status}`);
-  const json = (await res.json()) as { data?: any[] };
-  const card = json.data?.[0];
-  if (!card) return null;
+  const list = (await getJson(`${BASE}/${lang}/cards?${params.toString()}`)) as any[];
+  if (!Array.isArray(list) || list.length === 0) return null;
 
-  const p = card.cardmarket?.prices ?? {};
+  // Si une extension est fournie, on essaie de trouver le meilleur candidat.
+  const brief =
+    (set?.trim() &&
+      list.find((c) =>
+        String(c.id ?? '').toLowerCase().includes(set.trim().toLowerCase()),
+      )) ||
+    list[0];
+
+  const full = await getJson(`${BASE}/${lang}/cards/${brief.id}`);
+  const cm = full.pricing?.cardmarket ?? {};
+  const image = full.image
+    ? `${full.image}/high.webp`
+    : brief.image
+      ? `${brief.image}/high.webp`
+      : undefined;
+  const total = full.set?.cardCount?.official ?? full.set?.cardCount?.total;
+
   return {
-    cardId: card.id,
-    name: card.name,
-    set: card.set?.name ?? set ?? '',
-    number: card.number ? `${card.number}/${card.set?.printedTotal ?? '?'}` : number,
-    image: card.images?.large ?? card.images?.small,
-    price: p.trendPrice ?? p.averageSellPrice ?? undefined,
+    cardId: full.id,
+    name: full.name,
+    set: full.set?.name ?? set ?? '',
+    number: full.localId ? `${full.localId}/${total ?? '?'}` : number,
+    image,
+    price: pick(cm, ['trend', 'avg', 'avg30', 'trendHolo', 'avgHolo']),
     prices: {
-      avg30: p.avg30,
-      avg7: p.avg7,
-      avg1: p.avg1,
-      trend: p.trendPrice ?? p.averageSellPrice,
+      avg30: pick(cm, ['avg30', 'avg30Holo']),
+      avg7: pick(cm, ['avg7', 'avg7Holo']),
+      avg1: pick(cm, ['avg1', 'avg1Holo']),
+      trend: pick(cm, ['trend', 'avg', 'trendHolo', 'avgHolo']),
     },
-    url: card.cardmarket?.url,
+    url: `https://www.cardmarket.com/${lang === 'fr' ? 'fr' : 'en'}/Pokemon/Products/Search?searchString=${encodeURIComponent(full.name)}`,
   };
 }

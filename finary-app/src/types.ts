@@ -48,9 +48,10 @@ export interface PokemonCard {
   set: string; // extension
   number: string; // ex: "1/104"
   image?: string;
-  price: number; // valeur marché en €
+  price: number; // valeur marché de référence en € (état Near Mint)
   prices?: { avg30?: number; avg7?: number; avg1?: number; trend?: number };
   url?: string; // lien Cardmarket
+  condition?: string; // état de la carte (M, NM, EX, GD, LP, PL, PO)
 }
 
 export interface Portfolio {
