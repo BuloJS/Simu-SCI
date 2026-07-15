@@ -1,4 +1,4 @@
-export type Category = 'livret' | 'cto' | 'crypto';
+export type Category = 'livret' | 'cto' | 'crypto' | 'budget';
 
 /** Livret / épargne réglementée ou bancaire */
 export interface Livret {
@@ -32,14 +32,24 @@ export interface CryptoLine {
   cours: number; // cours actuel en € (auto via API ou manuel)
 }
 
+/** Ligne de budget (revenu ou dépense mensuelle) */
+export interface BudgetLine {
+  id: string;
+  label: string;
+  type: 'revenu' | 'depense';
+  montant: number; // € / mois
+}
+
 export interface Portfolio {
   livrets: Livret[];
   cto: CtoLine[];
   crypto: CryptoLine[];
+  budget: BudgetLine[];
 }
 
 export const emptyPortfolio: Portfolio = {
   livrets: [],
   cto: [],
   crypto: [],
+  budget: [],
 };

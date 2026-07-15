@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatEur, formatPct, uid } from '../lib/format';
 import { fetchQuotesEur, type SymbolResult } from '../lib/stocks';
 import type { CtoLine } from '../types';
+import { HoldingsOverview } from './HoldingsOverview';
 import { SymbolSearch } from './SymbolSearch';
 
 type Live = Record<
@@ -100,6 +101,14 @@ export function CtoTab({
 
   return (
     <div className="space-y-6">
+      <HoldingsOverview
+        rows={items.map((c) => ({
+          label: c.ticker || c.nom,
+          value: c.quantite * c.cours,
+          invested: c.quantite * c.pru,
+        }))}
+      />
+
       {/* Clé API si absente */}
       {!apiKey && (
         <div className="card border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10">

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { AllocationDonut } from './components/AllocationDonut';
 import { AuthBar } from './components/AuthBar';
+import { BudgetTab } from './components/BudgetTab';
 import { CryptoTab } from './components/CryptoTab';
 import { CtoTab } from './components/CtoTab';
 import { LivretTab } from './components/LivretTab';
@@ -18,6 +19,7 @@ const TABS: { key: Category; label: string; emoji: string }[] = [
   { key: 'livret', label: 'Livrets', emoji: '🏦' },
   { key: 'cto', label: 'CTO', emoji: '📈' },
   { key: 'crypto', label: 'Crypto', emoji: '₿' },
+  { key: 'budget', label: 'Budget', emoji: '💰' },
 ];
 
 export default function App() {
@@ -35,6 +37,7 @@ export default function App() {
     livret: portfolio.livrets.length,
     cto: portfolio.cto.length,
     crypto: portfolio.crypto.length,
+    budget: portfolio.budget.length,
   };
 
   const exportJson = () => {
@@ -125,7 +128,7 @@ export default function App() {
           </div>
 
           <div className="space-y-4 lg:col-span-2">
-            <nav className="flex gap-2">
+            <nav className="flex flex-wrap gap-2">
               {TABS.map((tItem) => (
                 <button
                   key={tItem.key}
@@ -160,6 +163,12 @@ export default function App() {
               <CryptoTab
                 items={portfolio.crypto}
                 onChange={(v) => update('crypto', v)}
+              />
+            )}
+            {tab === 'budget' && (
+              <BudgetTab
+                items={portfolio.budget}
+                onChange={(v) => update('budget', v)}
               />
             )}
           </div>

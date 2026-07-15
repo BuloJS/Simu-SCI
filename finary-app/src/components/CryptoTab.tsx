@@ -3,6 +3,7 @@ import { CRYPTO_PRESETS } from '../data/rates';
 import { fetchCryptoPrices } from '../lib/crypto';
 import { formatEur, formatPct, uid } from '../lib/format';
 import type { CryptoLine } from '../types';
+import { HoldingsOverview } from './HoldingsOverview';
 
 export function CryptoTab({
   items,
@@ -71,6 +72,14 @@ export function CryptoTab({
 
   return (
     <div className="space-y-6">
+      <HoldingsOverview
+        rows={items.map((c) => ({
+          label: c.symbol || c.nom,
+          value: c.quantite * c.cours,
+          invested: c.quantite * c.pru,
+        }))}
+      />
+
       <form
         onSubmit={add}
         className="card grid grid-cols-2 gap-3 lg:grid-cols-5 lg:items-end"
