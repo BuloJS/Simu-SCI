@@ -6,6 +6,7 @@ import { CryptoTab } from './components/CryptoTab';
 import { CtoTab } from './components/CtoTab';
 import { LivretTab } from './components/LivretTab';
 import { LongTermModal } from './components/LongTermModal';
+import { PokemonModal } from './components/PokemonModal';
 import { SummaryCards } from './components/SummaryCards';
 import { useApiKey } from './hooks/useApiKey';
 import { useAuth } from './hooks/useAuth';
@@ -29,6 +30,7 @@ export default function App() {
   const [tab, setTab] = useState<Category>('livret');
   const [showLongTerm, setShowLongTerm] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
+  const [showPokemon, setShowPokemon] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => computeTotals(portfolio), [portfolio]);
@@ -93,6 +95,13 @@ export default function App() {
               title="Gérer mon budget"
             >
               💰 Budget
+            </button>
+            <button
+              onClick={() => setShowPokemon(true)}
+              className="btn-ghost"
+              title="Ma collection Pokémon"
+            >
+              🃏 Pokémon
             </button>
             <button
               onClick={() => setShowLongTerm(true)}
@@ -187,6 +196,13 @@ export default function App() {
           items={portfolio.budget}
           onChange={(v) => update('budget', v)}
           onClose={() => setShowBudget(false)}
+        />
+      )}
+      {showPokemon && (
+        <PokemonModal
+          items={portfolio.pokemon}
+          onChange={(v) => update('pokemon', v)}
+          onClose={() => setShowPokemon(false)}
         />
       )}
     </div>

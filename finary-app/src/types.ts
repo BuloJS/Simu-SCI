@@ -40,11 +40,25 @@ export interface BudgetLine {
   montant: number; // € / mois
 }
 
+/** Carte Pokémon de la collection */
+export interface PokemonCard {
+  id: string;
+  cardId?: string; // id pokemontcg.io
+  name: string;
+  set: string; // extension
+  number: string; // ex: "1/104"
+  image?: string;
+  price: number; // valeur marché en €
+  prices?: { avg30?: number; avg7?: number; avg1?: number; trend?: number };
+  url?: string; // lien Cardmarket
+}
+
 export interface Portfolio {
   livrets: Livret[];
   cto: CtoLine[];
   crypto: CryptoLine[];
   budget: BudgetLine[];
+  pokemon: PokemonCard[];
 }
 
 export const emptyPortfolio: Portfolio = {
@@ -52,4 +66,5 @@ export const emptyPortfolio: Portfolio = {
   cto: [],
   crypto: [],
   budget: [],
+  pokemon: [],
 };

@@ -33,14 +33,24 @@ export function usePortfolio(userId: string | null) {
   const [portfolio, setPortfolio] = useState<Portfolio>(() => loadScope('anon'));
   const [syncing, setSyncing] = useState(false);
   const loadedFor = useRef<string | null>(null);
+  const prevUserId = useRef<string | null>(null);
 
   // Chargement du bon jeu de données quand l'utilisateur change
   useEffect(() => {
     const scope = userId ?? 'anon';
+    const prev = prevUserId.current;
+    prevUserId.current = userId;
     let cancelled = false;
 
     if (!userId) {
-      setPortfolio(loadScope('anon'));
+      // Déconnexion : on remet tout à zéro et on efface le cache local
+      if (prev) {
+        localStorage.removeItem(scopeKey('anon'));
+        localStorage.removeItem(LEGACY_KEY);
+        setPortfolio(emptyPortfolio);
+      } else {
+        setPortfolio(loadScope('anon'));
+      }
       loadedFor.current = 'anon';
       return;
     }
