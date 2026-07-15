@@ -4,28 +4,41 @@ export function AuthBar({
   email,
   syncing,
   onSignIn,
+  onSignUp,
   onSignOut,
 }: {
   email: string | null;
   syncing: boolean;
-  onSignIn: (email: string) => Promise<void>;
+  onSignIn: (email: string, password: string) => Promise<void>;
+  onSignUp: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   onSignOut: () => void;
 }) {
-  const [value, setValue] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [open, setOpen] = useState(false);
+  const [mail, setMail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!value.trim()) return;
-    setStatus('sending');
+  const run = async (mode: 'in' | 'up') => {
+    if (!mail.trim() || !password) return;
+    setBusy(true);
+    setMsg(null);
     try {
-      await onSignIn(value.trim());
-      setStatus('sent');
-      setMessage('Lien de connexion envoyé ! Vérifie ta boîte mail.');
-    } catch (err) {
-      setStatus('error');
-      setMessage(err instanceof Error ? err.message : 'Erreur de connexion');
+      if (mode === 'in') {
+        await onSignIn(mail.trim(), password);
+      } else {
+        const { needsConfirmation } = await onSignUp(mail.trim(), password);
+        if (needsConfirmation) {
+          setMsg({ type: 'ok', text: 'Compte créé — confirme via l’email reçu, puis connecte-toi.' });
+          return;
+        }
+      }
+      setOpen(false);
+      setPassword('');
+    } catch (e) {
+      setMsg({ type: 'err', text: e instanceof Error ? e.message : 'Erreur' });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -33,7 +46,7 @@ export function AuthBar({
     return (
       <div className="flex items-center gap-2 text-sm">
         <span className="hidden text-slate-500 dark:text-slate-400 sm:inline">
-          {syncing ? '⟳ Synchro…' : '☁ Synchronisé'} · {email}
+          {syncing ? '⟳ Synchro…' : '☁ Synchronisé'}
         </span>
         <button onClick={onSignOut} className="btn-ghost">
           Déconnexion
@@ -42,25 +55,46 @@ export function AuthBar({
     );
   }
 
-  if (status === 'sent') {
-    return <span className="text-sm text-emerald-500">{message}</span>;
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className="btn-primary">
+        Se connecter
+      </button>
+    );
   }
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2">
+    <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900">
       <input
-        className="input w-44 sm:w-52"
+        className="input"
         type="email"
-        placeholder="ton@email.com"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        placeholder="email"
+        autoComplete="username"
+        value={mail}
+        onChange={(e) => setMail(e.target.value)}
       />
-      <button type="submit" className="btn-primary shrink-0" disabled={status === 'sending'}>
-        {status === 'sending' ? '…' : 'Se connecter'}
-      </button>
-      {status === 'error' && (
-        <span className="hidden text-xs text-rose-500 md:inline">{message}</span>
+      <input
+        className="input"
+        type="password"
+        placeholder="mot de passe"
+        autoComplete="current-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && run('in')}
+      />
+      <div className="flex gap-2">
+        <button className="btn-primary flex-1" disabled={busy} onClick={() => run('in')}>
+          Se connecter
+        </button>
+        <button className="btn-ghost flex-1" disabled={busy} onClick={() => run('up')}>
+          Créer un compte
+        </button>
+      </div>
+      {msg && (
+        <p className={`text-xs ${msg.type === 'ok' ? 'text-emerald-500' : 'text-rose-500'}`}>
+          {msg.text}
+        </p>
       )}
-    </form>
+    </div>
   );
 }

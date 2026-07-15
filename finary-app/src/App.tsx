@@ -4,6 +4,7 @@ import { AuthBar } from './components/AuthBar';
 import { CryptoTab } from './components/CryptoTab';
 import { CtoTab } from './components/CtoTab';
 import { LivretTab } from './components/LivretTab';
+import { LongTermModal } from './components/LongTermModal';
 import { SummaryCards } from './components/SummaryCards';
 import { useApiKey } from './hooks/useApiKey';
 import { useAuth } from './hooks/useAuth';
@@ -20,11 +21,12 @@ const TABS: { key: Category; label: string; emoji: string }[] = [
 ];
 
 export default function App() {
-  const { user, userId, signIn, signOut } = useAuth();
+  const { user, userId, signIn, signUp, signOut } = useAuth();
   const { portfolio, setPortfolio, update, syncing } = usePortfolio(userId);
   const { dark, toggle } = useDarkMode();
   const { apiKey, setApiKey } = useApiKey();
   const [tab, setTab] = useState<Category>('livret');
+  const [showLongTerm, setShowLongTerm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => computeTotals(portfolio), [portfolio]);
@@ -80,8 +82,16 @@ export default function App() {
               email={user?.email ?? null}
               syncing={syncing}
               onSignIn={signIn}
+              onSignUp={signUp}
               onSignOut={signOut}
             />
+            <button
+              onClick={() => setShowLongTerm(true)}
+              className="btn-primary"
+              title="Simuler une projection long terme"
+            >
+              🔮 Vision long terme
+            </button>
             <button onClick={exportJson} className="btn-ghost" title="Sauvegarder">
               ⬇ Export
             </button>
@@ -161,6 +171,8 @@ export default function App() {
           février 2026
         </footer>
       </main>
+
+      {showLongTerm && <LongTermModal onClose={() => setShowLongTerm(false)} />}
     </div>
   );
 }
