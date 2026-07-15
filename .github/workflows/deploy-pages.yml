@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/finary-financial-dashboard-wl0vz3
   workflow_dispatch:
 
 # Autorisations nécessaires au déploiement Pages
