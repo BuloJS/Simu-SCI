@@ -69,10 +69,11 @@ export function PokemonModal({
             prices: match.prices,
             url: match.url,
             condition: 'NM',
+            source: match.source,
           },
         ]);
         if (match.price == null)
-          setNote('Carte trouvée mais sans prix Cardmarket — saisis la valeur à la main.');
+          setNote('Carte trouvée mais sans prix (ni Cardmarket ni TCGplayer) — saisis la valeur à la main.');
       } else {
         onChange([
           ...items,
@@ -244,6 +245,9 @@ export function PokemonModal({
                     <span className="text-xs text-slate-400">réf. {formatEur(c.price)}</span>
                   )}
                 </div>
+                {c.source && (
+                  <p className="text-[10px] text-slate-400">via {c.source}</p>
+                )}
 
                 {!c.price && (
                   <input

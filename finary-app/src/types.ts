@@ -52,6 +52,7 @@ export interface PokemonCard {
   prices?: { avg30?: number; avg7?: number; avg1?: number; trend?: number };
   url?: string; // lien Cardmarket
   condition?: string; // état de la carte (M, NM, EX, GD, LP, PL, PO)
+  source?: string; // provenance du prix : "Cardmarket" ou "TCGplayer"
 }
 
 export interface Portfolio {
