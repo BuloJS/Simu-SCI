@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { AllocationDonut } from './components/AllocationDonut';
 import { AuthBar } from './components/AuthBar';
-import { BudgetTab } from './components/BudgetTab';
+import { BudgetModal } from './components/BudgetModal';
 import { CryptoTab } from './components/CryptoTab';
 import { CtoTab } from './components/CtoTab';
 import { LivretTab } from './components/LivretTab';
@@ -19,7 +19,6 @@ const TABS: { key: Category; label: string; emoji: string }[] = [
   { key: 'livret', label: 'Livrets', emoji: '🏦' },
   { key: 'cto', label: 'CTO', emoji: '📈' },
   { key: 'crypto', label: 'Crypto', emoji: '₿' },
-  { key: 'budget', label: 'Budget', emoji: '💰' },
 ];
 
 export default function App() {
@@ -29,6 +28,7 @@ export default function App() {
   const { apiKey, setApiKey } = useApiKey();
   const [tab, setTab] = useState<Category>('livret');
   const [showLongTerm, setShowLongTerm] = useState(false);
+  const [showBudget, setShowBudget] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => computeTotals(portfolio), [portfolio]);
@@ -37,7 +37,6 @@ export default function App() {
     livret: portfolio.livrets.length,
     cto: portfolio.cto.length,
     crypto: portfolio.crypto.length,
-    budget: portfolio.budget.length,
   };
 
   const exportJson = () => {
@@ -88,6 +87,13 @@ export default function App() {
               onSignUp={signUp}
               onSignOut={signOut}
             />
+            <button
+              onClick={() => setShowBudget(true)}
+              className="btn-ghost"
+              title="Gérer mon budget"
+            >
+              💰 Budget
+            </button>
             <button
               onClick={() => setShowLongTerm(true)}
               className="btn-primary"
@@ -165,12 +171,6 @@ export default function App() {
                 onChange={(v) => update('crypto', v)}
               />
             )}
-            {tab === 'budget' && (
-              <BudgetTab
-                items={portfolio.budget}
-                onChange={(v) => update('budget', v)}
-              />
-            )}
           </div>
         </div>
 
@@ -182,6 +182,13 @@ export default function App() {
       </main>
 
       {showLongTerm && <LongTermModal onClose={() => setShowLongTerm(false)} />}
+      {showBudget && (
+        <BudgetModal
+          items={portfolio.budget}
+          onChange={(v) => update('budget', v)}
+          onClose={() => setShowBudget(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export type Category = 'livret' | 'cto' | 'crypto' | 'budget';
+export type Category = 'livret' | 'cto' | 'crypto';
 
 /** Livret / épargne réglementée ou bancaire */
 export interface Livret {

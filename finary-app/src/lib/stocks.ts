@@ -86,6 +86,26 @@ export async function fetchQuotes(
   return out;
 }
 
+/** Historique de clôtures d'une action/ETF (ordre chronologique) pour la mini-courbe. */
+export async function fetchStockHistory(
+  symbol: string,
+  apiKey: string,
+  outputsize = 30,
+): Promise<number[]> {
+  const url =
+    `${BASE}/time_series?symbol=${encodeURIComponent(symbol)}` +
+    `&interval=1day&outputsize=${outputsize}&apikey=${apiKey}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new TwelveDataError(`HTTP ${res.status}`);
+  const json = await res.json();
+  ensureOk(json);
+  const values = (json.values ?? []) as { close: string }[];
+  return values
+    .map((v) => parseFloat(v.close))
+    .filter(Number.isFinite)
+    .reverse(); // Twelve Data renvoie du plus récent au plus ancien
+}
+
 /** Taux de change vers l'EUR pour une devise donnée (1 unité -> x EUR). */
 export async function fetchFxToEur(
   currency: string,

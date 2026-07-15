@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { formatEur, formatPct, uid } from '../lib/format';
-import { fetchQuotesEur, type SymbolResult } from '../lib/stocks';
+import { fetchQuotesEur, fetchStockHistory, type SymbolResult } from '../lib/stocks';
 import type { CtoLine } from '../types';
 import { HoldingsOverview } from './HoldingsOverview';
+import { Sparkline } from './Sparkline';
 import { SymbolSearch } from './SymbolSearch';
 
 type Live = Record<
@@ -34,6 +35,29 @@ export function CtoTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  // Mini-courbe historique par ligne (dépliable)
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [hist, setHist] = useState<Record<string, number[]>>({});
+  const [histLoading, setHistLoading] = useState<string | null>(null);
+
+  const toggleHist = async (c: CtoLine) => {
+    if (openId === c.id) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(c.id);
+    if (!apiKey || !c.ticker || hist[c.ticker]) return;
+    setHistLoading(c.ticker);
+    try {
+      const data = await fetchStockHistory(c.ticker, apiKey, 30);
+      setHist((h) => ({ ...h, [c.ticker]: data }));
+    } catch {
+      /* silencieux : la courbe restera indisponible */
+    } finally {
+      setHistLoading(null);
+    }
+  };
 
   const onPick = (r: SymbolResult) => {
     setNom(r.name);
@@ -238,16 +262,23 @@ export function CtoTab({
                   const inv = c.quantite * c.pru;
                   const plus = val - inv;
                   return (
-                    <tr
-                      key={c.id}
-                      className="border-b border-slate-100 last:border-0 dark:border-slate-800/60"
-                    >
+                    <Fragment key={c.id}>
+                    <tr className="border-b border-slate-100 last:border-0 dark:border-slate-800/60">
                       <td className="px-4 py-3">
-                        <div className="font-medium">{c.nom}</div>
-                        <div className="text-xs text-slate-400">
-                          {c.ticker}
-                          {c.bourse ? ` · ${c.bourse}` : ''}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleHist(c)}
+                          className="text-left hover:opacity-80"
+                          title="Voir la courbe 30 j"
+                        >
+                          <div className="font-medium">
+                            {openId === c.id ? '▾' : '▸'} {c.nom}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            {c.ticker}
+                            {c.bourse ? ` · ${c.bourse}` : ''}
+                          </div>
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-right">{c.quantite}</td>
                       <td className="px-4 py-3 text-right">{formatEur(c.pru)}</td>
@@ -285,6 +316,27 @@ export function CtoTab({
                         </button>
                       </td>
                     </tr>
+                    {openId === c.id && (
+                      <tr className="border-b border-slate-100 dark:border-slate-800/60">
+                        <td colSpan={7} className="bg-slate-50 px-4 py-3 dark:bg-slate-900/40">
+                          {!apiKey ? (
+                            <span className="text-xs text-slate-400">
+                              Ajoute ta clé API pour voir la courbe.
+                            </span>
+                          ) : histLoading === c.ticker ? (
+                            <span className="text-xs text-slate-400">Chargement de la courbe…</span>
+                          ) : hist[c.ticker]?.length ? (
+                            <div className="flex items-center gap-3">
+                              <Sparkline data={hist[c.ticker]} />
+                              <span className="text-xs text-slate-400">30 jours</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">Courbe indisponible.</span>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>

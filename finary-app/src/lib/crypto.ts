@@ -24,3 +24,17 @@ export async function fetchCryptoPrices(
   }
   return prices;
 }
+
+/** Historique de prix en € d'une crypto (pour la mini-courbe). */
+export async function fetchCryptoHistory(
+  coinId: string,
+  days = 30,
+): Promise<number[]> {
+  const url =
+    `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coinId)}` +
+    `/market_chart?vs_currency=eur&days=${days}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`CoinGecko a répondu ${res.status}`);
+  const data = (await res.json()) as { prices?: [number, number][] };
+  return (data.prices ?? []).map((p) => p[1]).filter(Number.isFinite);
+}

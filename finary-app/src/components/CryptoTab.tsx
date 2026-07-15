@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { CRYPTO_PRESETS } from '../data/rates';
-import { fetchCryptoPrices } from '../lib/crypto';
+import { fetchCryptoHistory, fetchCryptoPrices } from '../lib/crypto';
 import { formatEur, formatPct, uid } from '../lib/format';
 import type { CryptoLine } from '../types';
 import { HoldingsOverview } from './HoldingsOverview';
+import { Sparkline } from './Sparkline';
 
 export function CryptoTab({
   items,
@@ -18,6 +19,29 @@ export function CryptoTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  // Mini-courbe historique par ligne (dépliable)
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [hist, setHist] = useState<Record<string, number[]>>({});
+  const [histLoading, setHistLoading] = useState<string | null>(null);
+
+  const toggleHist = async (c: CryptoLine) => {
+    if (openId === c.id) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(c.id);
+    if (hist[c.coinId]) return;
+    setHistLoading(c.coinId);
+    try {
+      const data = await fetchCryptoHistory(c.coinId, 30);
+      setHist((h) => ({ ...h, [c.coinId]: data }));
+    } catch {
+      /* silencieux */
+    } finally {
+      setHistLoading(null);
+    }
+  };
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,13 +184,20 @@ export function CryptoTab({
                 const inv = c.quantite * c.pru;
                 const plus = val - inv;
                 return (
-                  <tr
-                    key={c.id}
-                    className="border-b border-slate-100 last:border-0 dark:border-slate-800/60"
-                  >
+                  <Fragment key={c.id}>
+                  <tr className="border-b border-slate-100 last:border-0 dark:border-slate-800/60">
                     <td className="px-4 py-3">
-                      <span className="font-medium">{c.nom}</span>
-                      <span className="ml-1 text-xs text-slate-400">{c.symbol}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleHist(c)}
+                        className="text-left hover:opacity-80"
+                        title="Voir la courbe 30 j"
+                      >
+                        <span className="font-medium">
+                          {openId === c.id ? '▾' : '▸'} {c.nom}
+                        </span>
+                        <span className="ml-1 text-xs text-slate-400">{c.symbol}</span>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-right">{c.quantite}</td>
                     <td className="px-4 py-3 text-right">
@@ -202,6 +233,23 @@ export function CryptoTab({
                       </button>
                     </td>
                   </tr>
+                  {openId === c.id && (
+                    <tr className="border-b border-slate-100 dark:border-slate-800/60">
+                      <td colSpan={7} className="bg-slate-50 px-4 py-3 dark:bg-slate-900/40">
+                        {histLoading === c.coinId ? (
+                          <span className="text-xs text-slate-400">Chargement de la courbe…</span>
+                        ) : hist[c.coinId]?.length ? (
+                          <div className="flex items-center gap-3">
+                            <Sparkline data={hist[c.coinId]} />
+                            <span className="text-xs text-slate-400">30 jours</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">Courbe indisponible.</span>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 );
               })}
             </tbody>
