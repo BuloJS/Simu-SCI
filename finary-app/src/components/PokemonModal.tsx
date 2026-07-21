@@ -9,7 +9,12 @@ import {
   YAxis,
 } from 'recharts';
 import { formatEur, formatEur0, uid } from '../lib/format';
-import { searchPokemonCard, type Lang } from '../lib/pokemon';
+import {
+  getCardDetails,
+  searchPokemonList,
+  type Lang,
+  type PokemonBrief,
+} from '../lib/pokemon';
 import type { PokemonCard } from '../types';
 
 /** États Cardmarket, du meilleur au pire, avec coefficient sur le prix de référence (NM). */
@@ -47,48 +52,76 @@ export function PokemonModal({
   const [lang, setLang] = useState<Lang>('fr');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [results, setResults] = useState<PokemonBrief[] | null>(null);
+  const [adding, setAdding] = useState<string | null>(null);
 
-  const add = async (e: React.FormEvent) => {
+  // Recherche : affiche la liste des cartes correspondantes pour que l'utilisateur choisisse
+  const search = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setBusy(true);
     setNote(null);
+    setResults(null);
     try {
-      const match = await searchPokemonCard(name, number, set, lang);
-      if (match) {
-        onChange([
-          ...items,
-          {
-            id: uid(),
-            cardId: match.cardId,
-            name: match.name,
-            set: match.set,
-            number: match.number,
-            image: match.image,
-            price: match.price ?? 0,
-            prices: match.prices,
-            url: match.url,
-            condition: 'NM',
-            source: match.source,
-          },
-        ]);
-        if (match.price == null)
-          setNote('Carte trouvée mais sans prix (ni Cardmarket ni TCGplayer) — saisis la valeur à la main.');
+      const list = await searchPokemonList(name, number, lang);
+      if (list.length === 0) {
+        setNote('Aucune carte trouvée. Vérifie le nom/numéro ou ajoute-la à la main.');
+        setResults([]);
       } else {
-        onChange([
-          ...items,
-          { id: uid(), name: name.trim(), set: set.trim(), number: number.trim(), price: 0, condition: 'NM' },
-        ]);
-        setNote('Carte non trouvée — ajoutée sans prix (vérifie le nom/numéro ou saisis la valeur).');
+        setResults(list);
       }
-      setName('');
-      setSet('');
-      setNumber('');
     } catch (err) {
       setNote(err instanceof Error ? err.message : 'Erreur de recherche');
     } finally {
       setBusy(false);
     }
+  };
+
+  // Choix d'une carte : récupère son détail (prix) et l'ajoute à la collection
+  const choose = async (brief: PokemonBrief) => {
+    setAdding(brief.id);
+    try {
+      const m = await getCardDetails(brief.id, lang);
+      onChange([
+        ...items,
+        {
+          id: uid(),
+          cardId: m.cardId,
+          name: m.name,
+          set: m.set,
+          number: m.number,
+          image: m.image ?? (brief.image ? brief.image.replace('/low.', '/high.') : undefined),
+          price: m.price ?? 0,
+          prices: m.prices,
+          url: m.url,
+          tcgUrl: m.tcgUrl,
+          condition: 'NM',
+          source: m.source,
+        },
+      ]);
+      setResults(null);
+      setNote(null);
+      setName('');
+      setSet('');
+      setNumber('');
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : "Erreur à l'ajout");
+    } finally {
+      setAdding(null);
+    }
+  };
+
+  const addManual = () => {
+    if (!name.trim()) return;
+    onChange([
+      ...items,
+      { id: uid(), name: name.trim(), set: set.trim(), number: number.trim(), price: 0, condition: 'NM' },
+    ]);
+    setResults(null);
+    setNote(null);
+    setName('');
+    setSet('');
+    setNumber('');
   };
 
   const remove = (id: string) => onChange(items.filter((c) => c.id !== id));
@@ -177,25 +210,70 @@ export function PokemonModal({
           </div>
         )}
 
-        {/* Ajout */}
-        <form onSubmit={add} className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:items-end">
+        {/* Recherche */}
+        <form onSubmit={search} className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:items-end">
           <label className="text-sm">
             <span className="mb-1 block text-slate-500 dark:text-slate-400">Nom de la carte</span>
-            <input className="input" placeholder={lang === 'fr' ? 'Dracaufeu' : 'Charizard'} value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="input" placeholder={lang === 'fr' ? 'Celebi' : 'Celebi'} value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="text-sm">
-            <span className="mb-1 block text-slate-500 dark:text-slate-400">Extension</span>
+            <span className="mb-1 block text-slate-500 dark:text-slate-400">Extension (option.)</span>
             <input className="input" placeholder="Set de Base" value={set} onChange={(e) => setSet(e.target.value)} />
           </label>
           <label className="text-sm">
-            <span className="mb-1 block text-slate-500 dark:text-slate-400">Numéro</span>
+            <span className="mb-1 block text-slate-500 dark:text-slate-400">Numéro (option.)</span>
             <input className="input" placeholder="4/102 ou 1 sur 104" value={number} onChange={(e) => setNumber(e.target.value)} />
           </label>
           <button type="submit" className="btn-primary h-[38px]" disabled={busy}>
-            {busy ? 'Recherche…' : '+ Ajouter'}
+            {busy ? 'Recherche…' : '🔎 Rechercher'}
           </button>
         </form>
-        {note && <p className="mt-2 text-xs text-amber-500">{note}</p>}
+        {note && (
+          <p className="mt-2 flex items-center gap-2 text-xs text-amber-500">
+            {note}
+            <button onClick={addManual} className="underline">
+              Ajouter « {name} » à la main
+            </button>
+          </p>
+        )}
+
+        {/* Résultats de recherche : on clique sur la bonne carte */}
+        {results && results.length > 0 && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                {results.length} résultat(s) — clique sur ta carte
+              </p>
+              <button onClick={() => setResults(null)} className="text-xs text-slate-400 hover:text-rose-500">
+                Fermer
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              {results.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => choose(r)}
+                  disabled={adding !== null}
+                  className="group rounded-lg p-1 text-left transition hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800"
+                  title={`${r.name} (${r.setId} · ${r.localId ?? '?'})`}
+                >
+                  <div className="flex aspect-[63/88] items-center justify-center overflow-hidden rounded bg-slate-100 dark:bg-slate-800">
+                    {r.image ? (
+                      <img src={r.image} alt={r.name} className="h-full w-full object-contain" loading="lazy" />
+                    ) : (
+                      <span className="text-2xl">🃏</span>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate text-xs font-medium">{r.name}</p>
+                  <p className="truncate text-[10px] text-slate-400">
+                    {r.setId} · n°{r.localId ?? '?'}
+                  </p>
+                  {adding === r.id && <p className="text-[10px] text-brand">Ajout…</p>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {items.length === 0 ? (
           <p className="mt-6 text-center text-sm text-slate-400">
@@ -258,11 +336,18 @@ export function PokemonModal({
                     onChange={(e) => patch(c.id, { price: parseFloat(e.target.value) || 0 })}
                   />
                 )}
-                {c.url && (
-                  <a href={c.url} target="_blank" rel="noreferrer" className="mt-1 block text-xs text-brand hover:underline">
-                    Voir sur Cardmarket ↗
-                  </a>
-                )}
+                <div className="mt-1 flex gap-3 text-xs">
+                  {c.url && (
+                    <a href={c.url} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                      Cardmarket ↗
+                    </a>
+                  )}
+                  {c.tcgUrl && (
+                    <a href={c.tcgUrl} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                      TCGplayer ↗
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -51,6 +51,7 @@ export interface PokemonCard {
   price: number; // valeur marché de référence en € (état Near Mint)
   prices?: { avg30?: number; avg7?: number; avg1?: number; trend?: number };
   url?: string; // lien Cardmarket
+  tcgUrl?: string; // lien TCGplayer
   condition?: string; // état de la carte (M, NM, EX, GD, LP, PL, PO)
   source?: string; // provenance du prix : "Cardmarket" ou "TCGplayer"
 }

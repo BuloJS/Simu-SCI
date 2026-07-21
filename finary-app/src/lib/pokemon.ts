@@ -1,6 +1,7 @@
 /**
- * Recherche de cartes Pokémon via l'API TCGdex (https://tcgdex.dev) — gratuite,
- * multilingue (français inclus), CORS ok. Fournit image + prix Cardmarket.
+ * Cartes Pokémon via l'API TCGdex (https://tcgdex.dev) — gratuite, multilingue
+ * (français inclus), CORS ok. Recherche (liste de résultats) puis détail (prix
+ * Cardmarket, repli TCGplayer converti en €).
  */
 const BASE = 'https://api.tcgdex.net/v2';
 
@@ -13,6 +14,15 @@ export interface PokemonPrices {
   trend?: number;
 }
 
+/** Résultat bref (pour le choix parmi plusieurs cartes). */
+export interface PokemonBrief {
+  id: string;
+  localId?: string;
+  name: string;
+  image?: string;
+  setId: string;
+}
+
 export interface PokemonMatch {
   cardId: string;
   name: string;
@@ -21,7 +31,8 @@ export interface PokemonMatch {
   image?: string;
   price?: number;
   prices: PokemonPrices;
-  url?: string;
+  url?: string; // lien Cardmarket
+  tcgUrl?: string; // lien TCGplayer
   source?: string; // "Cardmarket" ou "TCGplayer"
 }
 
@@ -78,38 +89,40 @@ async function usdToEur(): Promise<number> {
   return 0.92;
 }
 
-export async function searchPokemonCard(
+/** Liste des cartes correspondant à un nom (+ numéro optionnel). */
+export async function searchPokemonList(
   name: string,
   number: string,
-  set: string | undefined,
   lang: Lang = 'fr',
-): Promise<PokemonMatch | null> {
+  limit = 18,
+): Promise<PokemonBrief[]> {
   const params = new URLSearchParams();
   if (name.trim()) params.set('name', name.trim());
   const num = parseNumber(number);
   if (num) params.set('localId', num);
+  if ([...params].length === 0) return [];
 
   const list = (await getJson(`${BASE}/${lang}/cards?${params.toString()}`)) as any[];
-  if (!Array.isArray(list) || list.length === 0) return null;
+  if (!Array.isArray(list)) return [];
+  return list.slice(0, limit).map((c) => ({
+    id: c.id,
+    localId: c.localId,
+    name: c.name,
+    image: c.image ? `${c.image}/low.webp` : undefined,
+    setId:
+      typeof c.id === 'string' && c.id.includes('-')
+        ? c.id.slice(0, c.id.lastIndexOf('-'))
+        : '',
+  }));
+}
 
-  // Si une extension est fournie, on essaie de trouver le meilleur candidat.
-  const brief =
-    (set?.trim() &&
-      list.find((c) =>
-        String(c.id ?? '').toLowerCase().includes(set.trim().toLowerCase()),
-      )) ||
-    list[0];
-
-  const full = await getJson(`${BASE}/${lang}/cards/${brief.id}`);
+/** Détail d'une carte choisie : image HD + prix (Cardmarket puis TCGplayer). */
+export async function getCardDetails(id: string, lang: Lang = 'fr'): Promise<PokemonMatch> {
+  const full = await getJson(`${BASE}/${lang}/cards/${id}`);
   const cm = full.pricing?.cardmarket ?? {};
-  const image = full.image
-    ? `${full.image}/high.webp`
-    : brief.image
-      ? `${brief.image}/high.webp`
-      : undefined;
+  const image = full.image ? `${full.image}/high.webp` : undefined;
   const total = full.set?.cardCount?.official ?? full.set?.cardCount?.total;
 
-  // 1) Cardmarket (EUR) en priorité
   const cmTrend = pick(cm, ['trend', 'avg', 'avg30', 'trendHolo', 'avgHolo']);
   let price = cmTrend;
   let prices: PokemonPrices = {
@@ -120,26 +133,27 @@ export async function searchPokemonCard(
   };
   let source: string | undefined = cmTrend != null ? 'Cardmarket' : undefined;
 
-  // 2) Sinon repli sur TCGplayer (USD -> EUR)
   if (price == null) {
     const usd = tcgplayerUsd(full.pricing?.tcgplayer);
     if (usd != null) {
-      const rate = await usdToEur();
-      price = usd * rate;
+      price = usd * (await usdToEur());
       prices = { trend: price };
       source = 'TCGplayer';
     }
   }
 
+  const cmLang = lang === 'fr' ? 'fr' : 'en';
+  const q = encodeURIComponent(full.name);
   return {
     cardId: full.id,
     name: full.name,
-    set: full.set?.name ?? set ?? '',
-    number: full.localId ? `${full.localId}/${total ?? '?'}` : number,
+    set: full.set?.name ?? '',
+    number: full.localId ? `${full.localId}/${total ?? '?'}` : '',
     image,
     price,
     prices,
-    url: `https://www.cardmarket.com/${lang === 'fr' ? 'fr' : 'en'}/Pokemon/Products/Search?searchString=${encodeURIComponent(full.name)}`,
+    url: `https://www.cardmarket.com/${cmLang}/Pokemon/Products/Search?searchString=${q}`,
+    tcgUrl: `https://www.tcgplayer.com/search/pokemon/product?q=${q}&productLineName=pokemon`,
     source,
   };
 }
