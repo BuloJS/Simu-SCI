@@ -72,19 +72,23 @@ export function CtoTab({
     const p = parseFloat(pru);
     const c = parseFloat(cours);
     if (!nom.trim() || !Number.isFinite(q) || q <= 0) return;
-    onChange([
+    const tk = ticker.trim().toUpperCase();
+    // cours saisi ? on le garde. Sinon on partira du PRU en attendant le cours live.
+    const coursSaisi = Number.isFinite(c);
+    const newList: CtoLine[] = [
       ...items,
       {
         id: uid(),
         nom: nom.trim(),
-        ticker: ticker.trim().toUpperCase(),
+        ticker: tk,
         devise: devise || 'EUR',
         bourse,
         quantite: q,
         pru: Number.isFinite(p) ? p : 0,
-        cours: Number.isFinite(c) ? c : Number.isFinite(p) ? p : 0,
+        cours: coursSaisi ? c : Number.isFinite(p) ? p : 0,
       },
-    ]);
+    ];
+    onChange(newList);
     setNom('');
     setTicker('');
     setDevise('EUR');
@@ -92,14 +96,16 @@ export function CtoTab({
     setQuantite('');
     setPru('');
     setCours('');
+    // Récupère automatiquement le cours du marché pour calculer la plus-value
+    if (apiKey && tk && !coursSaisi) void refresh(newList);
   };
 
   const setCoursFor = (id: string, value: number) =>
     onChange(items.map((c) => (c.id === id ? { ...c, cours: value } : c)));
   const remove = (id: string) => onChange(items.filter((c) => c.id !== id));
 
-  const refresh = async () => {
-    const tickers = items.map((i) => i.ticker).filter(Boolean);
+  const refresh = async (baseList: CtoLine[] = items) => {
+    const tickers = baseList.map((i) => i.ticker).filter(Boolean);
     if (!apiKey || tickers.length === 0) return;
     setLoading(true);
     setError(null);
@@ -107,7 +113,7 @@ export function CtoTab({
       const quotes = await fetchQuotesEur(tickers, apiKey);
       setLive(quotes);
       onChange(
-        items.map((c) =>
+        baseList.map((c) =>
           quotes[c.ticker] ? { ...c, cours: quotes[c.ticker].eur } : c,
         ),
       );
@@ -230,12 +236,14 @@ export function CtoTab({
             <p className="text-xs text-slate-400">
               {updatedAt
                 ? `Cours mis à jour à ${updatedAt}`
-                : 'Cours saisis à la main tant que tu ne rafraîchis pas'}
+                : apiKey
+                  ? 'Cours du marché récupéré auto à l’ajout · « ↻ Cours live » pour rafraîchir'
+                  : 'Sans clé API : saisis le cours actuel à la main pour voir la plus-value'}
               {error && <span className="ml-1 text-rose-500">· {error}</span>}
             </p>
             <button
               className="btn-ghost"
-              onClick={refresh}
+              onClick={() => refresh()}
               disabled={loading || !apiKey}
               title={!apiKey ? 'Ajoute ta clé API' : ''}
             >
