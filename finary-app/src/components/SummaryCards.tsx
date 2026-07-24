@@ -32,7 +32,7 @@ export function SummaryCards({ t }: { t: Totals }) {
   const pvRatio = t.investi > 0 ? t.plusValue / t.investi : 0;
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <Stat label="Patrimoine total" value={formatEur(t.total)} />
       <Stat
         label="Revenus passifs / an"

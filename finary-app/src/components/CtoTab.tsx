@@ -401,7 +401,7 @@ export function CtoTab({
               <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 Cours en direct
               </h3>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {items
                   .filter((c) => live[c.ticker])
                   .map((c) => {

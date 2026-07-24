@@ -89,19 +89,35 @@ export default function App() {
               onSignUp={signUp}
               onSignOut={signOut}
             />
-            <button onClick={() => setShowBudget(true)} className="btn-ghost" title="Gérer mon budget">
+            <button
+              onClick={() => setShowBudget(true)}
+              className="btn-ghost"
+              title="Gérer mon budget"
+            >
               💰 Budget
             </button>
-            <button onClick={() => setShowPokemon(true)} className="btn-ghost" title="Ma collection Pokémon">
+            <button
+              onClick={() => setShowPokemon(true)}
+              className="btn-ghost"
+              title="Ma collection Pokémon"
+            >
               🃏 Pokémon
             </button>
-            <button onClick={() => setShowLongTerm(true)} className="btn-primary" title="Projection long terme">
+            <button
+              onClick={() => setShowLongTerm(true)}
+              className="btn-primary"
+              title="Simuler une projection long terme"
+            >
               🔮 Vision long terme
             </button>
             <button onClick={exportJson} className="btn-ghost" title="Sauvegarder">
               ⬇ Export
             </button>
-            <button onClick={() => fileRef.current?.click()} className="btn-ghost" title="Importer">
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="btn-ghost"
+              title="Importer une sauvegarde"
+            >
               ⬆ Import
             </button>
             <input
