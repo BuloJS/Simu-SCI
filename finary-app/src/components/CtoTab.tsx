@@ -26,6 +26,7 @@ export function CtoTab({
   const [ticker, setTicker] = useState('');
   const [devise, setDevise] = useState('EUR');
   const [bourse, setBourse] = useState('');
+  const [mic, setMic] = useState('');
   const [quantite, setQuantite] = useState('');
   const [pru, setPru] = useState('');
   const [cours, setCours] = useState('');
@@ -50,7 +51,7 @@ export function CtoTab({
     if (!apiKey || !c.ticker || hist[c.ticker]) return;
     setHistLoading(c.ticker);
     try {
-      const data = await fetchStockHistory(c.ticker, apiKey, 30);
+      const data = await fetchStockHistory(c.ticker, apiKey, 30, c.mic);
       setHist((h) => ({ ...h, [c.ticker]: data }));
     } catch {
       /* silencieux : la courbe restera indisponible */
@@ -64,6 +65,7 @@ export function CtoTab({
     setTicker(r.symbol);
     setDevise(r.currency || 'EUR');
     setBourse(r.exchange || '');
+    setMic(r.mic || '');
   };
 
   const add = (e: React.FormEvent) => {
@@ -83,6 +85,7 @@ export function CtoTab({
         ticker: tk,
         devise: devise || 'EUR',
         bourse,
+        mic: mic || undefined,
         quantite: q,
         pru: Number.isFinite(p) ? p : 0,
         cours: coursSaisi ? c : Number.isFinite(p) ? p : 0,
@@ -93,6 +96,7 @@ export function CtoTab({
     setTicker('');
     setDevise('EUR');
     setBourse('');
+    setMic('');
     setQuantite('');
     setPru('');
     setCours('');
@@ -105,12 +109,14 @@ export function CtoTab({
   const remove = (id: string) => onChange(items.filter((c) => c.id !== id));
 
   const refresh = async (baseList: CtoLine[] = items) => {
-    const tickers = baseList.map((i) => i.ticker).filter(Boolean);
-    if (!apiKey || tickers.length === 0) return;
+    const entries = baseList
+      .filter((i) => i.ticker)
+      .map((i) => ({ symbol: i.ticker, mic: i.mic }));
+    if (!apiKey || entries.length === 0) return;
     setLoading(true);
     setError(null);
     try {
-      const quotes = await fetchQuotesEur(tickers, apiKey);
+      const quotes = await fetchQuotesEur(entries, apiKey);
       setLive(quotes);
       onChange(
         baseList.map((c) =>

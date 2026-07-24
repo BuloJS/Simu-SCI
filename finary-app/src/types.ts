@@ -15,7 +15,8 @@ export interface CtoLine {
   nom: string; // ex: "MSCI World ETF"
   ticker: string; // ex: "CW8"
   devise: string; // devise de cotation, ex: "USD", "EUR"
-  bourse: string; // place de cotation, ex: "NASDAQ", "XPAR"
+  bourse: string; // place de cotation, ex: "NASDAQ", "Euronext Paris"
+  mic?: string; // code de marché (ex: XPAR) pour lever l'ambiguïté des tickers
   quantite: number;
   pru: number; // prix de revient unitaire en €
   cours: number; // cours actuel en € (auto via API ou manuel)
