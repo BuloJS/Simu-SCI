@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react';
-import { formatEur, formatPct, uid } from '../lib/format';
+import { formatEur, formatPct, parseNum, uid } from '../lib/format';
 import { fetchQuotesEur, fetchStockHistory, type SymbolResult } from '../lib/stocks';
 import type { CtoLine } from '../types';
 import { HoldingsOverview } from './HoldingsOverview';
+import { NumberInput } from './NumberInput';
 import { Sparkline } from './Sparkline';
 import { SymbolSearch } from './SymbolSearch';
 
@@ -70,9 +71,9 @@ export function CtoTab({
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = parseFloat(quantite);
-    const p = parseFloat(pru);
-    const c = parseFloat(cours);
+    const q = parseNum(quantite);
+    const p = parseNum(pru);
+    const c = parseNum(cours);
     if (!nom.trim() || !Number.isFinite(q) || q <= 0) return;
     const tk = ticker.trim().toUpperCase();
     // cours saisi ? on le garde. Sinon on partira du PRU en attendant le cours live.
@@ -223,9 +224,8 @@ export function CtoTab({
             <span className="mb-1 block text-slate-500 dark:text-slate-400">Quantité</span>
             <input
               className="input"
-              type="number"
-              step="any"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={quantite}
               onChange={(e) => setQuantite(e.target.value)}
             />
@@ -234,8 +234,8 @@ export function CtoTab({
             <span className="mb-1 block text-slate-500 dark:text-slate-400">PRU (€)</span>
             <input
               className="input"
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
               value={pru}
               onChange={(e) => setPru(e.target.value)}
             />
@@ -244,8 +244,8 @@ export function CtoTab({
             <span className="mb-1 block text-slate-500 dark:text-slate-400">Cours (€)</span>
             <input
               className="input"
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
               placeholder="auto"
               value={cours}
               onChange={(e) => setCours(e.target.value)}
@@ -323,14 +323,10 @@ export function CtoTab({
                       <td className="px-4 py-3 text-right">{c.quantite}</td>
                       <td className="px-4 py-3 text-right">{formatEur(c.pru)}</td>
                       <td className="px-4 py-3 text-right">
-                        <input
+                        <NumberInput
                           className="input w-24 py-1 text-right"
-                          type="number"
-                          step="any"
                           value={c.cours}
-                          onChange={(e) =>
-                            setCoursFor(c.id, parseFloat(e.target.value) || 0)
-                          }
+                          onChange={(n) => setCoursFor(c.id, n)}
                         />
                       </td>
                       <td className="px-4 py-3 text-right">{formatEur(val)}</td>

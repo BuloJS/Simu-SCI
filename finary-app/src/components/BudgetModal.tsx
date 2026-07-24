@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { formatEur, formatPct, uid } from '../lib/format';
+import { formatEur, formatPct, parseNum, uid } from '../lib/format';
 import type { BudgetLine } from '../types';
+import { NumberInput } from './NumberInput';
 
 const PALETTE = [
   '#ef4444', '#f59e0b', '#ec4899', '#a855f7',
@@ -34,7 +35,7 @@ export function BudgetModal({
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const m = parseFloat(montant);
+    const m = parseNum(montant);
     if (!label.trim() || !Number.isFinite(m)) return;
     onChange([...items, { id: uid(), label: label.trim(), type, montant: m }]);
     setLabel('');
@@ -68,12 +69,10 @@ export function BudgetModal({
               className="flex items-center gap-2 border-b border-slate-100 px-4 py-2 last:border-0 dark:border-slate-800/60"
             >
               <span className="flex-1 text-sm">{l.label}</span>
-              <input
+              <NumberInput
                 className="input w-24 py-1 text-right"
-                type="number"
-                step="any"
                 value={l.montant}
-                onChange={(e) => setMontantFor(l.id, parseFloat(e.target.value) || 0)}
+                onChange={(n) => setMontantFor(l.id, n)}
               />
               <span className="text-xs text-slate-400">€</span>
               <button
@@ -159,8 +158,8 @@ export function BudgetModal({
             <span className="mb-1 block text-slate-500 dark:text-slate-400">Montant (€/mois)</span>
             <input
               className="input"
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
               value={montant}
               onChange={(e) => setMontant(e.target.value)}
             />

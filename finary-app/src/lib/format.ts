@@ -27,3 +27,9 @@ export const formatRate = (rate: number) =>
 
 export const uid = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+/** Parse un nombre saisi à la française (virgule) ou à l'anglaise (point). */
+export const parseNum = (v: string | number): number => {
+  if (typeof v === 'number') return v;
+  return parseFloat(String(v).replace(',', '.').trim());
+};

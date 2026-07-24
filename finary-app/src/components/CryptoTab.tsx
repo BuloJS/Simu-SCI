@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react';
 import { CRYPTO_PRESETS } from '../data/rates';
 import { fetchCryptoHistory, fetchCryptoPrices } from '../lib/crypto';
-import { formatEur, formatPct, uid } from '../lib/format';
+import { formatEur, formatPct, parseNum, uid } from '../lib/format';
 import type { CryptoLine } from '../types';
 import { HoldingsOverview } from './HoldingsOverview';
 import { Sparkline } from './Sparkline';
@@ -45,10 +45,10 @@ export function CryptoTab({
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = parseFloat(quantite);
+    const q = parseNum(quantite);
     if (!Number.isFinite(q) || q <= 0) return;
     const preset = CRYPTO_PRESETS.find((c) => c.coinId === coinId)!;
-    const p = parseFloat(pru);
+    const p = parseNum(pru);
     const newList: CryptoLine[] = [
       ...items,
       {
@@ -126,10 +126,9 @@ export function CryptoTab({
           <span className="mb-1 block text-slate-500 dark:text-slate-400">Quantité</span>
           <input
             className="input"
-            type="number"
-            step="any"
-            min="0"
-            placeholder="0.5"
+            type="text"
+            inputMode="decimal"
+            placeholder="0,5"
             value={quantite}
             onChange={(e) => setQuantite(e.target.value)}
           />
@@ -140,8 +139,8 @@ export function CryptoTab({
           </span>
           <input
             className="input"
-            type="number"
-            step="any"
+            type="text"
+            inputMode="decimal"
             value={pru}
             onChange={(e) => setPru(e.target.value)}
           />

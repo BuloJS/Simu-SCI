@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { formatEur, formatEur0, uid } from '../lib/format';
+import { formatEur, formatEur0, parseNum, uid } from '../lib/format';
 import {
   getCardDetails,
   searchPokemonList,
@@ -330,10 +330,10 @@ export function PokemonModal({
                 {!c.price && (
                   <input
                     className="input mt-2 py-1 text-right text-xs"
-                    type="number"
-                    step="any"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="valeur € (réf. NM)"
-                    onChange={(e) => patch(c.id, { price: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => patch(c.id, { price: parseNum(e.target.value) || 0 })}
                   />
                 )}
                 <div className="mt-1 flex gap-3 text-xs">

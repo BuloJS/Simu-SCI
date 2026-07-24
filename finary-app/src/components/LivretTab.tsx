@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LIVRET_PRESETS, RATES_AS_OF } from '../data/rates';
-import { formatEur, formatRate, uid } from '../lib/format';
+import { formatEur, formatRate, parseNum, uid } from '../lib/format';
 import type { Livret } from '../types';
 
 export function LivretTab({
@@ -23,14 +23,14 @@ export function LivretTab({
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const m = parseFloat(montant);
+    const m = parseNum(montant);
     if (!Number.isFinite(m) || m <= 0) return;
     const livret: Livret = {
       id: uid(),
       nom: preset,
       banque: banque.trim(),
       montant: m,
-      taux: parseFloat(taux) || 0,
+      taux: parseNum(taux) || 0,
     };
     onChange([...items, livret]);
     setMontant('');
@@ -75,9 +75,8 @@ export function LivretTab({
           <span className="mb-1 block text-slate-500 dark:text-slate-400">Montant (€)</span>
           <input
             className="input"
-            type="number"
-            min="0"
-            step="any"
+            type="text"
+            inputMode="decimal"
             placeholder="10000"
             value={montant}
             onChange={(e) => setMontant(e.target.value)}
@@ -87,8 +86,8 @@ export function LivretTab({
           <span className="mb-1 block text-slate-500 dark:text-slate-400">Taux (%)</span>
           <input
             className="input"
-            type="number"
-            step="any"
+            type="text"
+            inputMode="decimal"
             value={taux}
             onChange={(e) => setTaux(e.target.value)}
           />

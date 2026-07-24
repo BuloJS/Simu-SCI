@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { formatEur, formatEur0 } from '../lib/format';
+import { formatEur, formatEur0, parseNum } from '../lib/format';
 
 interface Point {
   annee: number;
@@ -53,9 +53,8 @@ function Field({
       <div className="relative">
         <input
           className="input"
-          type="number"
-          step="any"
-          min="0"
+          type="text"
+          inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -78,10 +77,10 @@ export function LongTermModal({ onClose }: { onClose: () => void }) {
   const sim = useMemo(
     () =>
       project(
-        parseFloat(capital) || 0,
-        parseFloat(taux) || 0,
-        parseFloat(mensuel) || 0,
-        Math.min(Math.max(parseInt(annees) || 0, 1), 60),
+        parseNum(capital) || 0,
+        parseNum(taux) || 0,
+        parseNum(mensuel) || 0,
+        Math.min(Math.max(Math.round(parseNum(annees)) || 0, 1), 60),
       ),
     [capital, taux, mensuel, annees],
   );
