@@ -117,22 +117,39 @@ export function CtoTab({
     setError(null);
     try {
       const quotes = await fetchQuotesEur(entries, apiKey);
-      setLive(quotes);
-      onChange(
-        baseList.map((c) =>
-          quotes[c.ticker] ? { ...c, cours: quotes[c.ticker].eur } : c,
-        ),
+
+      const wrong = new Set<string>(); // devise du cours ≠ devise de la ligne -> mauvais instrument
+      const applied = new Set<string>();
+      const updated = baseList.map((c) => {
+        const q = quotes[c.ticker];
+        if (!q) return c;
+        if (c.devise && q.currency && q.currency !== c.devise) {
+          wrong.add(c.ticker);
+          return c; // on refuse ex: un cours USD (Arcosa) sur une ligne EUR (Crédit Agricole)
+        }
+        applied.add(c.ticker);
+        return { ...c, cours: q.eur };
+      });
+      onChange(updated);
+      // Le panneau "cours en direct" ne montre que les cours réellement appliqués
+      setLive(
+        Object.fromEntries(Object.entries(quotes).filter(([sym]) => applied.has(sym))),
       );
       setUpdatedAt(new Date().toLocaleTimeString('fr-FR'));
-      // Signale les titres non mis à jour (quota atteint ou cotation non couverte)
+
       const missing = [
         ...new Set(entries.map((e) => e.symbol).filter((s) => !quotes[s])),
       ];
-      setError(
-        missing.length
-          ? `Cours non récupéré pour ${missing.join(', ')} — quota Twelve Data atteint, ou cotation non couverte (essaie la place Euronext Paris).`
-          : null,
-      );
+      const msgs: string[] = [];
+      if (wrong.size)
+        msgs.push(
+          `Cours ignoré pour ${[...wrong].join(', ')} (instrument d'une autre place/devise) — ré-ajoute la ligne via la recherche en choisissant Euronext Paris.`,
+        );
+      if (missing.length)
+        msgs.push(
+          `Cours non récupéré pour ${missing.join(', ')} — quota Twelve Data atteint ou cotation non couverte.`,
+        );
+      setError(msgs.length ? msgs.join(' ') : null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de récupération des cours');
     } finally {

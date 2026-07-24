@@ -87,8 +87,9 @@ export function SymbolSearch({
                   <span className="font-medium">{r.symbol}</span>
                   <span className="ml-2 truncate text-slate-500">{r.name}</span>
                 </span>
-                <span className="shrink-0 text-xs text-slate-400">
+                <span className="shrink-0 text-right text-xs text-slate-400">
                   {r.exchange} · {r.currency}
+                  {r.country && <span className="ml-1 opacity-70">({r.country})</span>}
                 </span>
               </button>
             </li>
