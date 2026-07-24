@@ -109,7 +109,7 @@ export function LongTermModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Récap */}
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
           <div className="card p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Capital final</p>
             <p className="mt-1 text-xl font-semibold text-brand">{formatEur(sim.total)}</p>

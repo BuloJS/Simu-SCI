@@ -280,7 +280,7 @@ export function PokemonModal({
             Ta collection est vide. Ajoute une carte (nom + numéro suffisent).
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4">
             {items.map((c) => (
               <div key={c.id} className="card relative p-3">
                 <button

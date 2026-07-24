@@ -106,7 +106,7 @@ export function BudgetModal({
         </div>
 
         {/* Récap : argent total / dépenses / reste pour vivre */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
           <div className="card p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Argent total</p>
             <p className="mt-1 text-xl font-semibold text-emerald-500">{formatEur(totalRev)}</p>
