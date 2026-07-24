@@ -31,6 +31,7 @@ export default function App() {
   const [showLongTerm, setShowLongTerm] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
   const [showPokemon, setShowPokemon] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => computeTotals(portfolio), [portfolio]);
@@ -72,7 +73,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-surface-dark/70">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight">
               <span className="text-brand">◆</span> Patrimoine
@@ -81,7 +82,9 @@ export default function App() {
               Total : {formatEur(totals.total)}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          {/* Desktop : actions en ligne */}
+          <div className="hidden flex-wrap items-center gap-2 sm:flex">
             <AuthBar
               email={user?.email ?? null}
               syncing={syncing}
@@ -89,49 +92,96 @@ export default function App() {
               onSignUp={signUp}
               onSignOut={signOut}
             />
-            <button
-              onClick={() => setShowBudget(true)}
-              className="btn-ghost"
-              title="Gérer mon budget"
-            >
+            <button onClick={() => setShowBudget(true)} className="btn-ghost" title="Gérer mon budget">
               💰 Budget
             </button>
-            <button
-              onClick={() => setShowPokemon(true)}
-              className="btn-ghost"
-              title="Ma collection Pokémon"
-            >
+            <button onClick={() => setShowPokemon(true)} className="btn-ghost" title="Ma collection Pokémon">
               🃏 Pokémon
             </button>
-            <button
-              onClick={() => setShowLongTerm(true)}
-              className="btn-primary"
-              title="Simuler une projection long terme"
-            >
+            <button onClick={() => setShowLongTerm(true)} className="btn-primary" title="Projection long terme">
               🔮 Vision long terme
             </button>
             <button onClick={exportJson} className="btn-ghost" title="Sauvegarder">
               ⬇ Export
             </button>
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="btn-ghost"
-              title="Importer une sauvegarde"
-            >
+            <button onClick={() => fileRef.current?.click()} className="btn-ghost" title="Importer">
               ⬆ Import
             </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json"
-              className="hidden"
-              onChange={importJson}
-            />
             <button onClick={toggle} className="btn-ghost" aria-label="Thème">
               {dark ? '☀️' : '🌙'}
             </button>
           </div>
+
+          {/* Mobile : thème + menu */}
+          <div className="flex items-center gap-2 sm:hidden">
+            <button onClick={toggle} className="btn-ghost" aria-label="Thème">
+              {dark ? '☀️' : '🌙'}
+            </button>
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="btn-ghost"
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? '✕' : '☰'}
+            </button>
+          </div>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={importJson}
+          />
         </div>
+
+        {/* Menu déroulant mobile */}
+        {menuOpen && (
+          <div className="border-t border-slate-200 dark:border-slate-800 sm:hidden">
+            <div className="mx-auto flex max-w-6xl flex-col gap-1.5 px-4 py-3">
+              <div className="pb-1">
+                <AuthBar
+                  email={user?.email ?? null}
+                  syncing={syncing}
+                  onSignIn={signIn}
+                  onSignUp={signUp}
+                  onSignOut={signOut}
+                />
+              </div>
+              <button
+                onClick={() => { setShowLongTerm(true); setMenuOpen(false); }}
+                className="btn-primary w-full justify-start"
+              >
+                🔮 Vision long terme
+              </button>
+              <button
+                onClick={() => { setShowBudget(true); setMenuOpen(false); }}
+                className="btn-ghost w-full justify-start"
+              >
+                💰 Budget
+              </button>
+              <button
+                onClick={() => { setShowPokemon(true); setMenuOpen(false); }}
+                className="btn-ghost w-full justify-start"
+              >
+                🃏 Pokémon
+              </button>
+              <button
+                onClick={() => { exportJson(); setMenuOpen(false); }}
+                className="btn-ghost w-full justify-start"
+              >
+                ⬇ Exporter la sauvegarde
+              </button>
+              <button
+                onClick={() => { fileRef.current?.click(); setMenuOpen(false); }}
+                className="btn-ghost w-full justify-start"
+              >
+                ⬆ Importer une sauvegarde
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
