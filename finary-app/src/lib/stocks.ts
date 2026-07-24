@@ -85,6 +85,7 @@ export async function fetchQuotes(
   }
 
   const out: Record<string, Quote> = {};
+  let firstError: Error | null = null;
   await Promise.all(
     [...groups.entries()].map(async ([mic, syms]) => {
       try {
@@ -108,11 +109,14 @@ export async function fetchQuotes(
             exchange: q.exchange ?? '',
           };
         }
-      } catch {
-        /* on ignore ce groupe pour ne pas casser tout le rafraîchissement */
+      } catch (e) {
+        if (!firstError) firstError = e instanceof Error ? e : new TwelveDataError('Erreur');
       }
     }),
   );
+  // Si rien n'a pu être récupéré et qu'une erreur est survenue (ex: quota atteint),
+  // on la remonte pour l'afficher à l'utilisateur.
+  if (Object.keys(out).length === 0 && firstError) throw firstError;
   return out;
 }
 

@@ -124,6 +124,15 @@ export function CtoTab({
         ),
       );
       setUpdatedAt(new Date().toLocaleTimeString('fr-FR'));
+      // Signale les titres non mis à jour (quota atteint ou cotation non couverte)
+      const missing = [
+        ...new Set(entries.map((e) => e.symbol).filter((s) => !quotes[s])),
+      ];
+      setError(
+        missing.length
+          ? `Cours non récupéré pour ${missing.join(', ')} — quota Twelve Data atteint, ou cotation non couverte (essaie la place Euronext Paris).`
+          : null,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de récupération des cours');
     } finally {
