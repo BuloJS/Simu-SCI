@@ -72,7 +72,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-surface-dark/70">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold tracking-tight">
               <span className="text-brand">◆</span> Patrimoine
