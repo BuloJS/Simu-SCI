@@ -109,18 +109,18 @@ export function LongTermModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Récap */}
-        <div className="mt-5 grid grid-cols-3 gap-3">
-          <div className="card p-4">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="card min-w-0 p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Capital final</p>
-            <p className="mt-1 text-xl font-semibold text-brand">{formatEur(sim.total)}</p>
+            <p className="mt-1 break-words text-lg font-semibold text-brand sm:text-xl">{formatEur(sim.total)}</p>
           </div>
-          <div className="card p-4">
+          <div className="card min-w-0 p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Total versé</p>
-            <p className="mt-1 text-xl font-semibold">{formatEur(sim.verse)}</p>
+            <p className="mt-1 break-words text-lg font-semibold sm:text-xl">{formatEur(sim.verse)}</p>
           </div>
-          <div className="card p-4">
+          <div className="card min-w-0 p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Intérêts générés</p>
-            <p className="mt-1 text-xl font-semibold text-emerald-500">
+            <p className="mt-1 break-words text-lg font-semibold text-emerald-500 sm:text-xl">
               {formatEur(sim.interets)}
             </p>
           </div>

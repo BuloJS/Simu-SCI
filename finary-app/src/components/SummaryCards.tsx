@@ -19,10 +19,10 @@ function Stat({
         ? 'text-rose-500'
         : 'text-slate-900 dark:text-white';
   return (
-    <div className="card">
+    <div className="card min-w-0">
       <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold ${toneClass}`}>{value}</p>
-      {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
+      <p className={`mt-1 break-words text-xl font-semibold sm:text-2xl ${toneClass}`}>{value}</p>
+      {sub && <p className="mt-1 break-words text-xs text-slate-400">{sub}</p>}
     </div>
   );
 }

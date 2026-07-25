@@ -106,18 +106,18 @@ export function BudgetModal({
         </div>
 
         {/* Récap : argent total / dépenses / reste pour vivre */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="card p-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="card min-w-0 p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Argent total</p>
-            <p className="mt-1 text-xl font-semibold text-emerald-500">{formatEur(totalRev)}</p>
+            <p className="mt-1 break-words text-lg font-semibold text-emerald-500 sm:text-xl">{formatEur(totalRev)}</p>
           </div>
-          <div className="card p-4">
+          <div className="card min-w-0 p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Dépenses</p>
-            <p className="mt-1 text-xl font-semibold text-rose-500">{formatEur(totalDep)}</p>
+            <p className="mt-1 break-words text-lg font-semibold text-rose-500 sm:text-xl">{formatEur(totalDep)}</p>
           </div>
-          <div className="card p-4">
+          <div className="card min-w-0 p-4">
             <p className="text-xs text-slate-500 dark:text-slate-400">Reste pour vivre</p>
-            <p className={`mt-1 text-xl font-semibold ${reste >= 0 ? 'text-brand' : 'text-rose-500'}`}>
+            <p className={`mt-1 break-words text-lg font-semibold sm:text-xl ${reste >= 0 ? 'text-brand' : 'text-rose-500'}`}>
               {formatEur(reste)}
             </p>
             {totalRev > 0 && (
